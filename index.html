@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-Oito">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Imóvel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo para o placeholder da textarea */
+        ::placeholder {
+            color: #9ca3af;
+            opacity: 1;
+        }
+        /* Corrigindo o layout das estrelas para garantir que não cortem */
+        .star-rating .star {
+            display: inline-flex; /* Garante que a caixa da estrela se ajuste ao SVG */
+            align-items: center;
+            justify-content: center;
+            margin: 0; /* Ajusta a margem para evitar espaçamentos indesejados */
+        }
+        .star-rating svg {
+            width: 28px; 
+            height: 28px;
+            vertical-align: middle; /* Alinha o SVG verticalmente */
+            
+            /* * CORREÇÃO: Adiciona um pequeno padding interno e usa 'content-box'.
+             * Isso força o contêiner do SVG a ser ligeiramente maior que o próprio gráfico,
+             * impedindo que a borda da caixa corte o visual do ícone.
+             */
+            padding: 2px; 
+            box-sizing: content-box; 
+            overflow: visible; /* Garante que o SVG não seja cortado */
+        }
+        /* Estilo para botões de rádio Sim/Não */
+        .radio-label {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .radio-input:checked + .radio-label {
+            background-color: #3b82f6; /* blue-600 */
+            color: white;
+            border-color: #3b82f6; /* blue-600 */
+        }
+        .radio-input {
+            display: none; /* Esconde o rádio original */
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+    <!-- Container principal, otimizado para celular (max-w-md) --><div class="container max-w-md mx-auto p-5 mt-8 mb-16 bg-white rounded-xl shadow-lg">
+
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+            Avaliação de Imóvel
+        </h1>
+
+        <!-- Mensagem de feedback (em vez de 'alert') --><div id="message-toast" class="hidden text-center text-sm font-medium p-3 mb-4 rounded-md">
+            <!-- O conteúdo será preenchido via JS --></div>
+
+        <!-- Formulário de Avaliação --><form id="evaluation-form" class="space-y-5">
+
+            <!-- Hidden input para armazenar o ID da avaliação em edição --><input type="hidden" id="evaluation-id" value="">
+
+            <!-- 1. Input de Nome --><div>
+                <label for="nome" class="block text-sm font-medium text-gray-700 mb-1">Nome (Casa ou Avaliador)</label>
+                <input type="text" id="nome" name="nome" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Casa da Praia, João Silva">
+            </div>
+
+            <!-- 2. Avaliações com Estrelas --><div id="star-categories" class="space-y-3">
+                <h3 class="text-sm font-medium text-gray-700">Avaliações (1 a 5 estrelas)</h3>
+                
+                <!-- Categoria: Localização --><div class="flex justify-between items-center">
+                    <label class="text-gray-600">Localização</label>
+                    <div class="star-rating flex flex-row-reverse justify-end space-x-1 space-x-reverse" data-category="localizacao">
+                        <!-- Estrelas serão injetadas aqui pelo JS para facilitar o manejo --></div>
+                </div>
+                
+                <!-- Categoria: Layout/Tamanho --><div class="flex justify-between items-center">
+                    <label class="text-gray-600">Layout/Tamanho</label>
+                    <div class="star-rating flex flex-row-reverse justify-end space-x-1 space-x-reverse" data-category="layout_tamanho">
+                    </div>
+                </div>
+
+                <!-- Categoria: Estrutura --><div class="flex justify-between items-center">
+                    <label class="text-gray-600">Estrutura</label>
+                    <div class="star-rating flex flex-row-reverse justify-end space-x-1 space-x-reverse" data-category="estrutura">
+                    </div>
+                </div>
+
+                <!-- Categoria: Terreno --><div class="flex justify-between items-center">
+                    <label class="text-gray-600">Terreno</label>
+                    <div class="star-rating flex flex-row-reverse justify-end space-x-1 space-x-reverse" data-category="terreno">
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOVA Categoria: Financiável (Sim/Não) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Financiável?</label>
+                <div class="flex">
+                    <input type="radio" id="financiavel_sim" name="financiavel" value="Sim" class="radio-input">
+                    <label for="financiavel_sim" class="radio-label">Sim</label>
+                    
+                    <input type="radio" id="financiavel_nao" name="financiavel" value="Não" class="radio-input">
+                    <label for="financiavel_nao" class="radio-label">Não</label>
+                    
+                    <input type="radio" id="financiavel_na" name="financiavel" value="N/A" class="radio-input" checked>
+                    <label for="financiavel_na" class="radio-label">N/A</label>
+                </div>
+            </div>
+            
+            <!-- 3. Input de Valor --><div>
+                <label for="valor" class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                <input type="text" id="valor" name="valor" inputmode="numeric"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: 500.000,00">
+            </div>
+
+            <!-- 4. Input de Observações --><div>
+                <label for="observacoes" class="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                <textarea id="observacoes" name="observacoes" rows="4"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Ex: Precisa de reparos no telhado, quintal espaçoso..."></textarea>
+            </div>
+
+            <!-- Botão de Adicionar/Atualizar Avaliação --><div>
+                <button type="submit" id="submit-button"
+                        class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Adicionar Avaliação
+                </button>
+            </div>
+            <div id="cancel-edit-container" class="hidden mt-3">
+                 <button type="button" id="cancel-edit-button"
+                        class="w-full bg-red-500 text-white py-2 px-4 rounded-lg font-semibold shadow-md hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2">
+                    Cancelar Edição
+                </button>
+            </div>
+        </form>
+
+        <!-- Seção de Exportar --><div class="mt-6 border-t pt-6">
+            <button id="export-csv"
+                    class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold shadow-md hover:bg-green-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                Exportar Avaliações (CSV)
+            </button>
+        </div>
+
+        <!-- Tabela de Avaliações Adicionadas --><div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Avaliações Adicionadas</h2>
+            <!-- Container com scroll horizontal para a tabela em telas pequenas --><div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table id="evaluations-table" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor (R$)</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Localização</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Layout/Tamanho</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estrutura</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terreno</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Financiável</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observações</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Linha de exemplo para quando não há dados --><tr id="no-data-row">
+                            <td colspan="9" class="px-4 py-4 text-center text-gray-500 italic">
+                                Nenhuma avaliação adicionada ainda.
+                            </td>
+                        </tr>
+                        <!-- Linhas de dados serão adicionadas aqui via JS --></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script (JavaScript) --><script>
+        // --- Estado da Aplicação ---
+        let evaluations = []; // Array para armazenar todos os objetos de avaliação
+        // Categorias de estrelas atualizadas
+        const categories = ['localizacao', 'layout_tamanho', 'estrutura', 'terreno'];
+        let currentRatings = {}; // Objeto para guardar as estrelas da avaliação atual sendo preenchida/editada
+        let editingId = null; // Armazena o ID da avaliação que está sendo editada
+
+        // --- Seletores do DOM ---
+        const form = document.getElementById('evaluation-form');
+        const evaluationIdInput = document.getElementById('evaluation-id');
+        const nomeInput = document.getElementById('nome');
+        const valorInput = document.getElementById('valor');
+        const observacoesInput = document.getElementById('observacoes');
+        const starCategoryContainer = document.getElementById('star-categories');
+        const tableBody = document.getElementById('table-body');
+        const noDataRow = document.getElementById('no-data-row');
+        const exportButton = document.getElementById('export-csv');
+        const submitButton = document.getElementById('submit-button');
+        const cancelEditButton = document.getElementById('cancel-edit-button');
+        const cancelEditContainer = document.getElementById('cancel-edit-container');
+        const messageToast = document.getElementById('message-toast');
+
+        // --- Funções Auxiliares de Formatação ---
+
+        /**
+         * Formata um número para o formato de moeda BRL (R$ 1.234.567,89).
+         * @param {number|string} value O valor a ser formatado.
+         * @returns {string} O valor formatado como moeda.
+         */
+        function formatCurrency(value) {
+            if (value === '' || value === null || isNaN(parseFloat(value))) {
+                return ''; // Retorna vazio se o valor não for um número válido
+            }
+            const numberValue = parseFloat(value);
+            return numberValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        /**
+         * Desformata uma string de moeda para um número (remove R$, pontos e substitui vírgula por ponto).
+         * @param {string} value A string de moeda.
+         * @returns {number} O número desformatado.
+         */
+        function unformatCurrency(value) {
+            if (typeof value !== 'string' || value.trim() === '') {
+                return NaN;
+            }
+            // Remove "R$", espaços, pontos de milhar e substitui vírgula por ponto decimal
+            const cleanedValue = value.replace(/[R$\s.]/g, '').replace(',', '.');
+            return parseFloat(cleanedValue);
+        }
+
+        /**
+         * Lida com a formatação do input de valor em tempo real.
+         */
+        function handleValorInput(e) {
+            let value = e.target.value;
+
+            // Remove tudo que não for dígito para processar
+            const digits = value.replace(/\D/g, '');
+
+            if (digits.length === 0) {
+                e.target.value = '';
+                return;
+            }
+
+            // Converte para número para facilitar o cálculo
+            let number = parseInt(digits, 10);
+
+            // Se for muito grande, evita overflow e usa um limite razoável
+            if (number > 99999999999) { // Limite de 11 dígitos para evitar problemas
+                 number = parseInt(digits.substring(0, 11), 10);
+                 showMessage('Valor excede o limite de caracteres recomendado.', 'error');
+            }
+
+            // Divide por 100 para ter as duas casas decimais
+            let formatted = (number / 100).toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            // Adiciona o prefixo "R$ "
+            e.target.value = `R$ ${formatted}`;
+        }
+
+        // --- Funções de Estrelas ---
+
+        /**
+         * Inicializa o estado das estrelas e renderiza-as no DOM.
+         */
+        function initializeStars(initialRatings = {}) {
+            const starContainers = document.querySelectorAll('.star-rating');
+            
+            starContainers.forEach(container => {
+                const category = container.dataset.category;
+                currentRatings[category] = initialRatings[category] || 0; // Define a nota inicial ou 0
+                container.innerHTML = ''; // Limpa antes de adicionar
+
+                for (let i = 5; i >= 1; i--) {
+                    const star = document.createElement('span');
+                    star.innerHTML = `
+                        <svg class="w-7 h-7 cursor-pointer" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.868 5.748c.09.278.349.468.64.498l6.007.873c.969.14 1.371 1.31.66 1.98l-4.347 4.237c-.235.23-.343.558-.291.879l1.026 5.98c.168.98-.85 1.73-1.716 1.28l-5.366-2.82c-.255-.134-.56-.134-.815 0l-5.366 2.82c-.866.45-1.884-.3-1.716-1.28l1.026-5.98c.052-.32-.056-.65-.291-.879L.74 12.026c-.711-.67-.309-1.84.66-1.98l6.007-.873c.291-.03.55-.22.64-.498l1.868-5.748z"/>
+                        </svg>`;
+                    star.dataset.value = i;
+                    star.classList.add('star');
+                    container.appendChild(star);
+                }
+                updateStarUI(category, currentRatings[category]); // Atualiza UI inicial
+            });
+        }
+
+        /**
+         * Atualiza a UI das estrelas para uma categoria específica.
+         */
+        function updateStarUI(category, rating) {
+            const container = document.querySelector(`.star-rating[data-category="${category}"]`);
+            if (!container) return;
+
+            const stars = container.querySelectorAll('.star svg');
+            
+            stars.forEach((star, index) => {
+                const starValue = 5 - index; // As estrelas estão em ordem reversa (5, 4, 3, 2, 1)
+                if (starValue <= rating) {
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+        }
+        
+        /**
+         * Lida com o clique em uma estrela usando delegação de eventos.
+         */
+        function handleStarClick(e) {
+            const star = e.target.closest('.star');
+            if (!star) return;
+
+            const container = star.closest('.star-rating');
+            const category = container.dataset.category;
+            const rating = parseInt(star.dataset.value, 10);
+
+            // Se clicar na mesma estrela, desmarca (define como 0)
+            if (currentRatings[category] === rating) {
+                currentRatings[category] = 0;
+            } else {
+                currentRatings[category] = rating;
+            }
+            
+            updateStarUI(category, currentRatings[category]);
+        }
+
+        // --- Funções de UI e Dados ---
+
+        /**
+         * Mostra uma mensagem de feedback (toast).
+         */
+        function showMessage(message, type = 'success') {
+            messageToast.textContent = message;
+            messageToast.classList.remove('hidden');
+
+            if (type === 'success') {
+                messageToast.classList.remove('bg-red-100', 'text-red-700');
+                messageToast.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                messageToast.classList.remove('bg-green-100', 'text-green-700');
+                messageToast.classList.add('bg-red-100', 'text-red-700');
+            }
+
+            // Esconde a mensagem após 3 segundos
+            setTimeout(() => {
+                messageToast.classList.add('hidden');
+            }, 3000);
+        }
+
+        /**
+         * Renderiza a tabela de avaliações.
+         */
+        function renderTable() {
+            tableBody.innerHTML = '';
+
+            if (evaluations.length === 0) {
+                tableBody.appendChild(noDataRow);
+                return;
+            }
+
+            // Remove a linha "Nenhuma avaliação" se houver dados
+            if (noDataRow.parentNode === tableBody) {
+                tableBody.removeChild(noDataRow);
+            }
+
+            evaluations.forEach(eval => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.dataset.id = eval.id; // Adiciona o ID para fácil acesso
+
+                const valorFormatado = formatCurrency(eval.valor);
+                const formatRating = (rating) => rating > 0 ? `${'⭐'.repeat(rating)} (${rating})` : 'N/A';
+
+                // Formata o 'Financiável' para exibição
+                const financiavelFormatado = eval.financiavel || 'N/A';
+
+                row.innerHTML = `
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${escapeHTML(eval.nome)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${valorFormatado}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${formatRating(eval.ratings.localizacao)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${formatRating(eval.ratings.layout_tamanho)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${formatRating(eval.ratings.estrutura)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${formatRating(eval.ratings.terreno)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">${escapeHTML(financiavelFormatado)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 min-w-[200px]">${escapeHTML(eval.observacoes || 'N/A')}</td>
+                    <td class="px-4 py-3 text-sm text-gray-800 whitespace-nowrap">
+                        <button class="edit-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${eval.id}">Editar</button>
+                        <button class="delete-btn text-red-600 hover:text-red-800" data-id="${eval.id}">Excluir</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Preenche o formulário com os dados de uma avaliação para edição.
+         * @param {string} id O ID da avaliação a ser editada.
+         */
+        function fillFormForEdit(id) {
+            const evaluation = evaluations.find(e => e.id === parseInt(id));
+            if (!evaluation) {
+                showMessage('Avaliação não encontrada para edição.', 'error');
+                return;
+            }
+
+            editingId = evaluation.id;
+            evaluationIdInput.value = evaluation.id; // Define o ID no campo oculto
+            nomeInput.value = evaluation.nome;
+            valorInput.value = formatCurrency(evaluation.valor); // Formata o valor para exibição
+            observacoesInput.value = evaluation.observacoes;
+
+            // Preenche o botão de rádio 'Financiável'
+            const financiavelValue = evaluation.financiavel || 'N/A'; // Garante um valor padrão
+            const radioToSelect = document.querySelector(`input[name="financiavel"][value="${financiavelValue}"]`);
+            if (radioToSelect) {
+                radioToSelect.checked = true;
+            }
+
+            // Define as estrelas e atualiza a UI
+            initializeStars(evaluation.ratings);
+
+            submitButton.textContent = 'Atualizar Avaliação';
+            submitButton.classList.remove('bg-blue-600');
+            submitButton.classList.add('bg-orange-500', 'hover:bg-orange-600');
+            cancelEditContainer.classList.remove('hidden');
+
+            // Rola para o topo para facilitar a edição
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Reseta o formulário e o estado de edição.
+         */
+        function resetForm() {
+            form.reset();
+            initializeStars(); // Reseta todas as estrelas para 0
+            editingId = null;
+            evaluationIdInput.value = '';
+            
+            // Garante que o rádio 'N/A' esteja marcado após resetar
+            document.getElementById('financiavel_na').checked = true;
+            
+            submitButton.textContent = 'Adicionar Avaliação';
+            submitButton.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+            submitButton.classList.add('bg-blue-600');
+            cancelEditContainer.classList.add('hidden');
+        }
+
+        /**
+         * Lida com o envio do formulário (adicionar ou atualizar).
+         */
+        function handleSubmit(e) {
+            e.preventDefault();
+
+            const nome = nomeInput.value.trim();
+            const valorInputRaw = valorInput.value;
+            const valor = unformatCurrency(valorInputRaw); // Desformata o valor
+            const observacoes = observacoesInput.value.trim();
+            const financiavel = form.elements.financiavel.value; // Pega o valor do rádio
+
+            if (!nome) {
+                showMessage('Por favor, preencha o nome.', 'error');
+                return;
+            }
+            if (valorInputRaw && isNaN(valor)) {
+                 showMessage('Por favor, insira um valor numérico válido.', 'error');
+                 return;
+            }
+
+            if (editingId) {
+                // Modo de edição
+                const index = evaluations.findIndex(e => e.id === editingId);
+                if (index !== -1) {
+                    evaluations[index] = {
+                        ...evaluations[index], // Mantém a mesma ID e outros dados se houver
+                        nome: nome,
+                        valor: valor,
+                        observacoes: observacoes,
+                        financiavel: financiavel, // Adiciona campo
+                        ratings: { ...currentRatings }
+                    };
+                    showMessage('Avaliação atualizada com sucesso!', 'success');
+                }
+            } else {
+                // Modo de adicionar
+                const newEvaluation = {
+                    id: Date.now(), // ID único
+                    nome: nome,
+                    valor: valor,
+                    observacoes: observacoes,
+                    financiavel: financiavel, // Adiciona campo
+                    ratings: { ...currentRatings }
+                };
+                evaluations.push(newEvaluation);
+                showMessage('Avaliação adicionada com sucesso!', 'success');
+            }
+
+            renderTable();
+            resetForm(); // Limpa o formulário e o estado de edição
+        }
+
+        /**
+         * Lida com a exclusão de uma avaliação.
+         * @param {string} id O ID da avaliação a ser excluída.
+         */
+        function handleDelete(id) {
+            if (confirm('Tem certeza que deseja excluir esta avaliação?')) {
+                evaluations = evaluations.filter(e => e.id !== parseInt(id));
+                renderTable();
+                showMessage('Avaliação excluída com sucesso!', 'success');
+                if (editingId === parseInt(id)) { // Se a avaliação sendo editada for excluída
+                    resetForm();
+                }
+            }
+        }
+
+        /**
+         * Escapa strings para HTML para prevenir XSS.
+         */
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        /**
+         * Escapa um valor para uso seguro em CSV (coloca entre aspas e dobra aspas internas).
+         */
+        function escapeCSV(value) {
+            if (value == null) return ''; // Trata nulo ou indefinido
+            let str = String(value);
+            // Se o valor contém vírgula, nova linha ou aspas, precisa ser escapado
+            if (str.includes(',') || str.includes('"') || str.includes('\n') || str.trim() === '') {
+                // Substitui aspas internas por aspas duplas e envolve tudo com aspas
+                str = '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
+        /**
+         * Exporta os dados para um arquivo CSV.
+         */
+        function exportToCSV() {
+            if (evaluations.length === 0) {
+                showMessage('Nenhuma avaliação para exportar.', 'error');
+                return;
+            }
+
+            const headers = [
+                'Nome', 'Valor (R$)', 'Observacoes',
+                'Rating_Localizacao', 'Rating_LayoutTamanho', 'Rating_Estrutura', 'Rating_Terreno',
+                'Financiavel'
+            ];
+
+            const csvRows = [headers.join(',')]; // Cabeçalho do CSV
+
+            evaluations.forEach(eval => {
+                const row = [
+                    escapeCSV(eval.nome),
+                    // Exporta o valor numérico puro para facilitar análise em planilhas
+                    escapeCSV(eval.valor !== '' && eval.valor !== null ? parseFloat(eval.valor).toFixed(2).replace('.', ',') : ''),
+                    escapeCSV(eval.observacoes),
+                    escapeCSV(eval.ratings.localizacao),
+                    escapeCSV(eval.ratings.layout_tamanho),
+                    escapeCSV(eval.ratings.estrutura),
+                    escapeCSV(eval.ratings.terreno),
+                    escapeCSV(eval.financiavel)
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + csvRows.join('\n');
+            const encodedUri = encodeURI(csvContent);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'avaliacoes_imoveis.csv');
+            document.body.appendChild(link);
+
+            link.click();
+            document.body.removeChild(link);
+
+            showMessage('Exportação CSV iniciada!', 'success');
+        }
+
+        // --- Inicialização e Event Listeners ---
+
+        // Delegação de evento para cliques nas estrelas
+        starCategoryContainer.addEventListener('click', handleStarClick);
+
+        // Listener para o envio do formulário
+        form.addEventListener('submit', handleSubmit);
+        
+        // Listener para o botão de exportar
+        exportButton.addEventListener('click', exportToCSV);
+
+        // Listener para formatação do input de valor
+        valorInput.addEventListener('input', handleValorInput);
+        
+        // Listener para o botão de cancelar edição
+        cancelEditButton.addEventListener('click', resetForm);
+
+        // Delegação de evento para os botões de editar/excluir na tabela
+        tableBody.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-btn');
+            const deleteBtn = e.target.closest('.delete-btn');
+
+            if (editBtn) {
+                fillFormForEdit(editBtn.dataset.id);
+            } else if (deleteBtn) {
+                handleDelete(deleteBtn.dataset.id);
+            }
+        });
+
+        // Inicializa a aplicação
+        initializeStars();
+        renderTable();
+
+    </script>
+</body>
+</html>
